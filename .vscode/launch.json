@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "tool",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true,
+      "module": "test",
+      "python": "/Users/kekland/.pyenv/shims/python3"
+    }
+  ]
+}
