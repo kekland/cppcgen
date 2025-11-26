@@ -30,7 +30,7 @@ def traverse_cursor(
     # Skip private members
     if child.access_specifier in (cindex.AccessSpecifier.PRIVATE, cindex.AccessSpecifier.PROTECTED):
       continue
-    
+
     # Skip cursors from included files
     location: cindex.SourceLocation = child.location
     if location.file is None or location.file.name != cursor.translation_unit.spelling:
@@ -42,9 +42,10 @@ def traverse_cursor(
       # Type aliases: if met, unwrap, and continue with the underlying type
       type_alias_cursor = None
 
-      if child.kind == cindex.CursorKind.TYPE_ALIAS_DECL:
+      while child.kind in [cindex.CursorKind.TYPE_ALIAS_DECL, cindex.CursorKind.TYPEDEF_DECL]:
+        if type_alias_cursor is None: type_alias_cursor = child
+        assert child is not None
         underlying_type = child.underlying_typedef_type
-        type_alias_cursor = child
         child = underlying_type.get_declaration()
 
       handled = True

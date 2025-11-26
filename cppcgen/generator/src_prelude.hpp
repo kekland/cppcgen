@@ -34,7 +34,7 @@ void handle_ffi_unknown_exception() {
   _last_exception = new ffi_exception{"Unknown exception"};
 }
 
-ffi_exception* maybe_get_last_ffi_exception() {
+ffi_exception_t maybe_get_last_ffi_exception() {
   if (_last_exception) {
     ffi_exception* ex = _last_exception;
     _last_exception = nullptr;

@@ -11,8 +11,9 @@ from ..builtins import BuiltinStructure
 class StdVectorStructure(BuiltinStructure):
   arg: cpp.Type
 
-  def __post_init__(self):
-    self.base = cpp.Structure(
+  @property
+  def cpp_structure_impl(self):
+    return cpp.Structure(
       name=f'vector<{self.arg.full_name}>',
       namespace='std',
       c_structure_=self,
@@ -22,6 +23,6 @@ class StdVectorStructure(BuiltinStructure):
   def template_file_stem(self) -> str: return 'std_vector'
 
   @property
-  def base_name(self) -> str: return f'std_vector_{self.arg.as_c_ptr.base_name.lower()}'
+  def base_name_impl(self) -> str: return f'std_vector_{self.arg.as_c_ptr.base_name.lower()}'
 
   def modify_template_file(self, lines: list[str]) -> list[str]: return self.modify_template_file_arg1(lines, self.arg)

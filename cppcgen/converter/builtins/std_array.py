@@ -12,8 +12,9 @@ class StdArrayStructure(BuiltinStructure):
   arg: cpp.Type
   size: int
 
-  def __post_init__(self):
-    self.base = cpp.Structure(
+  @property
+  def cpp_structure_impl(self):
+    return cpp.Structure(
       name=f'array<{self.arg.full_name}, {self.size}>',
       namespace='std',
       c_structure_=self,
@@ -23,7 +24,7 @@ class StdArrayStructure(BuiltinStructure):
   def template_file_stem(self) -> str: return 'std_array'
 
   @property
-  def base_name(self) -> str: return f'std_array_{self.arg.as_c_ptr.base_name.lower()}_{self.size}'
+  def base_name_impl(self) -> str: return f'std_array_{self.arg.as_c_ptr.base_name.lower()}_{self.size}'
 
   def modify_template_file(self, lines: list[str]) -> list[str]:
     lines = self.modify_template_file_arg1(lines, self.arg)

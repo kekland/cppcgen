@@ -63,6 +63,10 @@ class Method:
   def as_c(self) -> Method:
     from ..converter import cpp_method_to_c
     return cpp_method_to_c(self)
+  
+  @property
+  def is_operator(self) -> bool:
+    return self.name.startswith('operator') # A bit naive, but works for now.
 
   def generate_decl(self) -> list[str]:
     from ..generator import generate_method_decl

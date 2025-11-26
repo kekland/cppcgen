@@ -3,6 +3,7 @@ from __future__ import annotations
 from logging import getLogger
 
 from ...model import cpp
+from ... import utils
 
 _logger = getLogger('parameter_generator')
 
@@ -19,6 +20,6 @@ def generate_parameters_cast_block(parameters: list[cpp.Parameter], parameter_su
   lines: list[str] = []
 
   for p in parameters:
-    lines.append(f'{p.type.full_name} {p.name}{parameter_suffix} = {p.type.as_c_ptr.cast_to_cpp(p.name)};')
+    lines.append(f'{p.type.full_name} {p.name}{parameter_suffix} = {p.type.as_c_ptr.cast_to_cpp(utils.cpp_name_to_c_name(p.name))};')
 
   return lines

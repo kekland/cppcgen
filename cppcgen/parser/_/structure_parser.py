@@ -19,9 +19,10 @@ def parse_structure(cursor: cindex.Cursor, type_alias_cursor: Optional[cindex.Cu
   s = cpp.Structure(
     cindex_cursor=cursor,
     name=(type_alias_cursor or cursor).spelling,
-    namespace=parser.utils.get_cursor_namespace(cursor),
+    namespace=parser.utils.get_cursor_namespace(type_alias_cursor or cursor),
     fields=parser.parse_fields(cursor),
     base_structures=parse_base_structures(cursor),
+    type_=parser.parse_type(type_alias_cursor.type) if type_alias_cursor else None,
   )
 
   methods, synthetic_fields = parser.filter_methods_for_synthetic_fields(s, parser.parse_methods(cursor))

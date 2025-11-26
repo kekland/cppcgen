@@ -12,13 +12,15 @@
 
 #define FFI EXTERNC EXPORT
 
-typedef struct {
+struct ffi_exception {
   const char* message;
   const char* location;
-} ffi_exception;
+};
+
+typedef ffi_exception* ffi_exception_t;
 
 // Returns the last exception that occurred in FFI calls, or nullptr if none.
 // If an exception is returned, the exception is transferred to the caller, and
 // the internal exception storage is cleared.
-ffi_exception* maybe_get_last_ffi_exception();
+ffi_exception_t maybe_get_last_ffi_exception();
 void ffi_exception_destroy(ffi_exception* ex);

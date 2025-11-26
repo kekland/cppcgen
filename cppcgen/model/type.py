@@ -34,11 +34,27 @@ class Type:
   is_volatile: bool = False  # e.g. "volatile int"
 
   @property
-  def cindex_decl_cursor(self) -> Optional[cindex.Cursor]:
+  def cindex_decl_cursors(self) -> list[cindex.Cursor]:
+    decls = []
     decl = self.cindex_type.get_declaration() if self.cindex_type else None
-    if not decl: return None
-    if decl.kind == cindex.CursorKind.TYPE_ALIAS_DECL: return decl.get_definition() or decl
-    return decl
+    if not decl: return decls
+
+    decls.append(decl)
+    while decl.kind in [cindex.CursorKind.TYPEDEF_DECL, cindex.CursorKind.TYPE_ALIAS_DECL]:
+      _d = decl.underlying_typedef_type.get_declaration()
+      if _d.get_usr() == decl.get_usr(): break
+      if _d is not None:
+        decls.append(_d)
+        decl = _d
+      else: break
+
+    return decls
+
+  @property
+  def cindex_decl_cursor(self) -> Optional[cindex.Cursor]:
+    decls = self.cindex_decl_cursors
+    if not decls: return None
+    return decls[-1]
 
   @property
   def cindex_decl_usr(self) -> Optional[str]: return self.cindex_decl_cursor.get_usr() if self.cindex_decl_cursor else None
@@ -100,6 +116,14 @@ class Type:
   def unwrapped(self) -> 'Type':
     if len(self.template_args) == 1: return self.template_args[0]
     raise ValueError('Type.unwrapped called on type with != 1 template arguments')
+
+  @property
+  def decl_typedefs(self) -> 'list[Type]':
+    decl_cursors = self.cindex_decl_cursors
+    from ..parser import parse_type
+
+    result = [parse_type(cursor.type) for cursor in decl_cursors]
+    return result
 
   def _apply_qualifiers(self, _s: str) -> str:
     s = _s
@@ -171,8 +195,7 @@ class Type:
   @property
   def is_builtin_structure(self) -> bool:
     from ..converter import builtins
-    if builtins.maybe_get_builtin_structure(self) is not None: return True
-    return False
+    return builtins.maybe_get_builtin_structure(self) is not None
 
   @property
   def is_decl_structure(self) -> bool:
@@ -208,7 +231,7 @@ class Type:
     from .. import context
     if context.has_structure_by_usr(self.cindex_decl_usr): return context.get_structure_by_usr(self.cindex_decl_usr)  # type: ignore
     from .. import parser
-    return parser.parse_structure(self.cindex_decl_cursor)  # type: ignore
+    return parser.parse_structure(self.cindex_decl_cursor, type_alias_cursor=self.cindex_type.get_declaration())  # type: ignore
 
   @property
   def is_c_type(self) -> bool:
@@ -225,7 +248,7 @@ class Type:
   def as_c_ref(self) -> 'Type':
     from ..converter import cpp_type_to_c_ref
     return cpp_type_to_c_ref(self)
-  
+
   @property
   def ffi_error_default_return(self) -> str:
     if self.is_pointer or self.is_reference: return 'nullptr'
@@ -233,6 +256,7 @@ class Type:
     if self.is_primitive: return '0'
     if self.is_decl_structure: return 'nullptr'
     if self.is_decl_enum: return f'({self.as_enum.as_c.name})0'
+    return '0'
     raise ValueError(f'Cannot determine FFI error default return for type {self.full_name}')
 
   def cast_to_c_ptr(self, var_name: str) -> str:

@@ -12,8 +12,9 @@ class StdPairStructure(BuiltinStructure):
   arg1: cpp.Type
   arg2: cpp.Type
 
-  def __post_init__(self):
-    self.base = cpp.Structure(
+  @property
+  def cpp_structure_impl(self):
+    return cpp.Structure(
       name=f'pair<{self.arg1.full_name}, {self.arg2.full_name}>',
       namespace='std',
       c_structure_=self,
@@ -23,7 +24,7 @@ class StdPairStructure(BuiltinStructure):
   def template_file_stem(self) -> str: return 'std_pair'
 
   @property
-  def base_name(self) -> str: return f'std_pair_{self.arg1.as_c_ptr.base_name.lower()}_{self.arg2.as_c_ptr.base_name.lower()}'
+  def base_name_impl(self) -> str: return f'std_pair_{self.arg1.as_c_ptr.base_name.lower()}_{self.arg2.as_c_ptr.base_name.lower()}'
 
   def modify_template_file(self, lines: list[str]) -> list[str]:
     lines = self.modify_template_file_arg1(lines, self.arg1)

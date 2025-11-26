@@ -59,43 +59,41 @@ def cpp_structure_fields_to_c(structure: c.Structure) -> list[cpp.Method]:
   for field in fields:
     # getter
     getter_type = field.getter.return_type if field.getter else field.type
-    assert getter_type is not None
+    if getter_type is not None:
+      call = f'instance_->'
+      if field.getter: call += field.getter.generate_call([])
+      else: call += field.name
 
-    call = f'instance_->'
-    if field.getter: call += field.getter.generate_call([])
-    else: call += field.name
-
-    result.append(cpp.Method(
-      name=f'{structure.base_name}_{utils.cpp_name_to_c_name(field.name)}_get',
-      return_type=getter_type.as_c_ref,
-      parameters=[structure.type.as_param('instance')],
-      impl=[
-        f'auto instance_ = {structure.unwrap_type("instance")};',
-        f'return {getter_type.cast_to_c_ref(call)};',
-      ],
-    ))
+      result.append(cpp.Method(
+        name=f'{structure.base_name}_{utils.cpp_name_to_c_name(field.name)}_get',
+        return_type=getter_type.as_c_ref,
+        parameters=[structure.type.as_param('instance')],
+        impl=[
+          f'auto instance_ = {structure.unwrap_type("instance")};',
+          f'return {getter_type.cast_to_c_ref(call)};',
+        ],
+      ))
 
     # setter
     setter_type = field.setter.parameters[0].type if field.setter else field.type
-    assert setter_type is not None
+    if setter_type is not None:
+      call = f'instance_->'
+      if field.setter: call += field.setter.generate_call(['value_'])
+      else: call += f'{field.name} = value_'
 
-    call = f'instance_->'
-    if field.setter: call += field.setter.generate_call(['value_'])
-    else: call += f'{field.name} = value_'
-
-    result.append(cpp.Method(
-      name=f'{structure.base_name}_{utils.cpp_name_to_c_name(field.name)}_set',
-      return_type=cpp.Type.void(),
-      parameters=[
-        structure.type.as_param('instance'),
-        setter_type.as_param('value').as_c,
-      ],
-      impl=[
-        f'auto instance_ = {structure.unwrap_type("instance")};',
-        *generate_parameters_cast_block([cpp.Parameter(name='value', type=setter_type)]),
-        f'{call};',
-      ],
-    ))
+      result.append(cpp.Method(
+        name=f'{structure.base_name}_{utils.cpp_name_to_c_name(field.name)}_set',
+        return_type=cpp.Type.void(),
+        parameters=[
+          structure.type.as_param('instance'),
+          setter_type.as_param('value').as_c,
+        ],
+        impl=[
+          f'auto instance_ = {structure.unwrap_type("instance")};',
+          *generate_parameters_cast_block([cpp.Parameter(name='value', type=setter_type)]),
+          f'{call};',
+        ],
+      ))
 
   return result
 
@@ -104,6 +102,8 @@ def cpp_structure_methods_to_c(structure: c.Structure) -> list[cpp.Method]:
   result: list[cpp.Method] = []
 
   for method in structure.base.instance_methods:
+    # Ignore operator methods
+    if method.is_operator: continue
     call = f'instance_->{generate_method_call(method)}'
 
     impl = [

@@ -29,7 +29,7 @@ logging.basicConfig(
 
 logger = logging.getLogger('cppcgen')
 
-case_ = sys.argv[1] if len(sys.argv) > 1 else '*'
+case_ = sys.argv[1] if len(sys.argv) > 1 else 'chrono'
 
 for test_file in (root_dir / 'test').glob('*.hpp'):
   test_name = test_file.stem

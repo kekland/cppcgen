@@ -8,13 +8,13 @@ from ..builtins import BuiltinStructure
 
 
 @dataclass
-class StdStringStructure(BuiltinStructure):
+class StdChronoSteadyClockDurationStructure(BuiltinStructure):
   @property
   def cpp_structure_impl(self):
     return cpp.Structure(
-      name='string',
-      namespace='std',
+      name='steady_clock::duration',
+      namespace='std::chrono',
     )
 
   @property
-  def base_name_impl(self) -> str: return 'std_string'
+  def base_name_impl(self) -> str: return 'std_chrono_steady_clock_duration'

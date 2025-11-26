@@ -28,5 +28,7 @@ class MyClass {
 
   int getValue() const;
   void setValue(int value);
+
+  void hello(simple::MyClass* other);
 };
 }

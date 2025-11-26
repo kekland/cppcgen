@@ -34,5 +34,7 @@ class MyClass {
 
   std::string data;
   std::optional<int> optional_value;
+
+  std::array<std::vector<std::optional<std::string>>, 5> hello();
 };
 }  // namespace complex

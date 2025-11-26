@@ -56,6 +56,10 @@ class Structure:
   @property
   def type(self) -> Type:
     if self.type_ is not None: return self.type_
+    if self.cindex_cursor is not None:
+      from ..parser import parse_type
+      return parse_type(self.cindex_cursor.type)
+
     return Type(
       base_name=self.name,
       namespace=self.namespace,

@@ -34,6 +34,9 @@ def _generate_structure_typedefs(structure: c.Structure) -> GeneratedCode:
 def generate_structure(structure: cpp.Structure | c.Structure) -> GeneratedCode:
   full_name = structure.full_name if isinstance(structure, cpp.Structure) else structure.base_name
   _logger.debug(f'Generating code for structure: {full_name}')
+  if structure.type.is_builtin_structure:
+    _logger.debug(f'Skipping code generation for builtin structure: {full_name}')
+    return GeneratedCode()
 
   hdr = []
   src = []
