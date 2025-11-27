@@ -41,7 +41,20 @@ def parse_type(type_: cindex.Type) -> cpp.Type:
   if decl_cursor is not None and decl_cursor.kind == cindex.CursorKind.NO_DECL_FOUND: decl_cursor = None
 
   usr = decl_cursor.get_usr() if decl_cursor else None
-  if usr and usr in _usr_cache: return _usr_cache[usr]
+  if usr and usr in _usr_cache: 
+    cached = _usr_cache[usr]
+    return cpp.Type(
+      cindex_type=base_type,
+      base_name=cached.base_name,
+      namespace=cached.namespace,
+      is_const=pointee_type.is_const_qualified(),
+      is_volatile=pointee_type.is_volatile_qualified(),
+      is_lvalue_reference=type_.kind == cindex.TypeKind.LVALUEREFERENCE,
+      is_rvalue_reference=type_.kind == cindex.TypeKind.RVALUEREFERENCE,
+      is_pointer=type_.kind == cindex.TypeKind.POINTER,
+      is_function=type_.kind == cindex.TypeKind.FUNCTIONPROTO,
+      template_args=cached.template_args,
+    )
 
 
   # Get the declaration. If the namespace is std, we ignore the declaration.
@@ -79,6 +92,7 @@ def parse_type(type_: cindex.Type) -> cpp.Type:
     is_lvalue_reference=type_.kind == cindex.TypeKind.LVALUEREFERENCE,
     is_rvalue_reference=type_.kind == cindex.TypeKind.RVALUEREFERENCE,
     is_pointer=type_.kind == cindex.TypeKind.POINTER,
+    is_function=type_.kind == cindex.TypeKind.FUNCTIONPROTO,
     template_args=template_args,
   )
 

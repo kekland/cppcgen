@@ -32,6 +32,7 @@ class Type:
   is_rvalue_reference: bool = False  # e.g. "int&&"
   is_const: bool = False  # e.g. "const int"
   is_volatile: bool = False  # e.g. "volatile int"
+  is_function: bool = False  # e.g. "void()"
 
   @property
   def cindex_decl_cursors(self) -> list[cindex.Cursor]:
@@ -70,6 +71,12 @@ class Type:
 
   @property
   def is_qualified(self) -> bool: return self.is_const or self.is_volatile
+
+  @property
+  def is_unique_ptr(self) -> bool: return self.namespace == 'std' and self.base_name == 'unique_ptr' and len(self.template_args) == 1
+
+  @property
+  def is_shared_ptr(self) -> bool: return self.namespace == 'std' and self.base_name == 'shared_ptr' and len(self.template_args) == 1
 
   @property
   # Remove const/volatile qualifiers
@@ -185,11 +192,18 @@ class Type:
   def const_char_ptr() -> 'Type': return Type(base_name='char', is_pointer=True, is_const=True)
 
   @property
+  def is_std_optional(self) -> bool: return self.namespace == 'std' and self.base_name == 'optional' and len(self.template_args) == 1
+
+  @property
   def is_decl_enum(self) -> bool:
     from .enum import Enum
     from . import c
     if isinstance(self.cppdecl_, Enum): return True
     if isinstance(self.cdecl_, c.Enum): return True
+
+    from .. import context
+    if self.cindex_decl_usr and context.has_enum_by_usr(self.cindex_decl_usr): return True
+
     return self.cindex_decl_cursor.kind == cindex.CursorKind.ENUM_DECL if self.cindex_decl_cursor else False
 
   @property
@@ -204,6 +218,10 @@ class Type:
     if isinstance(self.cppdecl_, Structure): return True
     if isinstance(self.cdecl_, c.Structure): return True
     if self.is_builtin_structure: return True
+
+    from .. import context
+    if self.cindex_decl_usr and context.has_structure_by_usr(self.cindex_decl_usr): return True
+
     return self.cindex_decl_cursor.kind in (cindex.CursorKind.STRUCT_DECL, cindex.CursorKind.CLASS_DECL) if self.cindex_decl_cursor else False
 
   @property
@@ -270,6 +288,30 @@ class Type:
   def cast_to_cpp(self, var_name: str) -> str:
     from ..generator import generate_type_cast_to_cpp
     return generate_type_cast_to_cpp(self, var_name)
+
+  @property
+  def function_return_type(self) -> 'Type':
+    if not self.is_function: raise ValueError('Type.function_return_type called on non-function type')
+    if self.cindex_type is None: raise ValueError('Type.function_return_type called on type with no cindex_type')
+    ret_type = self.cindex_type.get_result()
+    from ..parser import parse_type
+    return parse_type(ret_type)
+
+  @property
+  def function_parameters(self) -> list['Parameter']:
+    if not self.is_function: raise ValueError('Type.function_parameters called on non-function type')
+    if self.cindex_type is None: raise ValueError('Type.function_parameters called on type with no cindex_type')
+    params = []
+
+    from ..parser import parse_type
+    args = self.cindex_type.argument_types()
+    i = 0
+    for t in args:
+      param_cpp_type = parse_type(t)
+      params.append(Parameter(name=f'p{i}', type=param_cpp_type))
+      i += 1
+
+    return params
 
 
 _primitive_names = {

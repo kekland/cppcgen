@@ -16,7 +16,7 @@ _logger = getLogger('generator')
 
 
 def _generate(entity) -> Optional[GeneratedCode]:
-  _logger.info(f'Generating code for entity: {entity.name}')
+  _logger.info(f'Generating code for entity: {entity.full_name}')
   if isinstance(entity, cpp.Structure): return generate_structure(entity)
   if isinstance(entity, cpp.Enum): return generate_enum(entity)
   _logger.warning(f'No generator for entity type {type(entity)}: {entity.name}')

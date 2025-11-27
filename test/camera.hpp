@@ -18,6 +18,12 @@ struct LatLngAltitude {
 struct FreeCameraOptions {
   /** Helper function for setting the mercator position as Lat&Lng and altitude in meters */
   void setLocation(const LatLngAltitude& location) noexcept;
+
+  void setCallback(std::function<void(double)> callback) noexcept;
+
+  void withZoom(int zoom_);
+
+  int zoom;
 };
 
 }  // namespace mbgl

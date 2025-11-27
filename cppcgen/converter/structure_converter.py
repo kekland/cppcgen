@@ -26,7 +26,7 @@ def cpp_structure_create_methods(structure: c.Structure) -> list[cpp.Method]:
 
     result.append(method)
     index += 1
-  
+
   return result
 
 
@@ -79,7 +79,10 @@ def cpp_structure_fields_to_c(structure: c.Structure) -> list[cpp.Method]:
     if setter_type is not None:
       call = f'instance_->'
       if field.setter: call += field.setter.generate_call(['value_'])
-      else: call += f'{field.name} = value_'
+      else:
+        if setter_type.is_std_optional:
+          call = f'if (value_.has_value()) {{ instance_->{field.name}.emplace(value_.value()); }} else {{ instance_->{field.name}.reset(); }}'
+        else: call += f'{field.name} = value_'
 
       result.append(cpp.Method(
         name=f'{structure.base_name}_{utils.cpp_name_to_c_name(field.name)}_set',
@@ -100,6 +103,7 @@ def cpp_structure_fields_to_c(structure: c.Structure) -> list[cpp.Method]:
 
 def cpp_structure_methods_to_c(structure: c.Structure) -> list[cpp.Method]:
   result: list[cpp.Method] = []
+  method_name_counts: dict[str, int] = {}
 
   for method in structure.base.instance_methods:
     # Ignore operator methods
@@ -117,8 +121,17 @@ def cpp_structure_methods_to_c(structure: c.Structure) -> list[cpp.Method]:
       impl.append(f'auto result_ = {call};')
       impl.append(f'return {method.return_type.cast_to_c_ref("result_")};')
 
+    # Ensure unique method names
+    name = f'{structure.base_name}_{utils.cpp_name_to_c_name(method.name)}'
+    if name in method_name_counts:
+      method_name_counts[name] += 1
+      name = f'{name}_{method_name_counts[name]}'
+    elif len(structure.base.find_methods_by_name(method.name)) > 1:
+      method_name_counts[name] = 1
+      name = f'{name}_1'
+
     method = cpp.Method(
-      name=f'{structure.base_name}_{utils.cpp_name_to_c_name(method.name)}',
+      name=name,
       return_type=method.return_type.as_c_ref,
       parameters=[
         structure.type.as_param('instance'),

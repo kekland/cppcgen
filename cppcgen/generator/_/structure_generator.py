@@ -12,11 +12,11 @@ def _generate_structure_typedefs(structure: c.Structure) -> GeneratedCode:
   hdr = [
     f'// Opaque pointers and typedefs for {structure.base.full_name} (ref)',
     f'struct {structure.ref_base_name};',
-    f'typedef {structure.ref_base_name}* {structure.ref_name};',
+    f'typedef struct {structure.ref_base_name}* {structure.ref_name};',
     '',
     f'// Opaque pointers and typedefs for {structure.base.full_name} (ptr)',
     f'struct {structure.base_name};',
-    f'typedef {structure.base_name}* {structure.name};',
+    f'typedef struct {structure.base_name}* {structure.name};',
   ]
 
   src = [

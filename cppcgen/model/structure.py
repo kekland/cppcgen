@@ -72,3 +72,6 @@ class Structure:
     if self.c_structure_ is not None: return self.c_structure_
     from ..converter import cpp_structure_to_c
     return cpp_structure_to_c(self)
+
+  def find_methods_by_name(self, name: str) -> list[Method]:
+    return [m for m in self.methods if m.name == name]

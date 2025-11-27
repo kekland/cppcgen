@@ -18,6 +18,10 @@ def generate_builtins() -> GeneratedCode:
 
   for name, structure in structures.items():
     _logger.info(f'Builtin used: {name}')
+    if structure.is_passthrough_type:
+      _logger.debug(f'Skipping code generation for passthrough builtin structure: {structure.base.full_name}')
+      continue
+
     code_ = generate_structure(structure)
 
     divider = generate_divider([f'Built-in structure: {structure.base.full_name}'])

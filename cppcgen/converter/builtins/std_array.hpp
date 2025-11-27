@@ -20,8 +20,13 @@ FFI void std_array_ARG1_SIZE_set(std_array_ARG1_SIZE_t instance, size_t index, A
 
 FFI std_array_ARG1_SIZE_ref_t std_array_ARG1_SIZE_ref_create() {
   FFI_FUNCTION_GUARD_BEGIN
-  auto arr = std::array<ARG1_CPP, SIZE>();
-  return std_array_ARG1_SIZE_ref::wrap(new ref<std::array<ARG1_CPP, SIZE>>(arr));
+  if constexpr (std::is_default_constructible_v<ARG1_CPP>) {
+    auto arr = std::array<ARG1_CPP, SIZE>();
+    return std_array_ARG1_SIZE_ref::wrap(new ref<std::array<ARG1_CPP, SIZE>>(arr));
+  }
+  else {
+    throw std::runtime_error("Cannot create std::array<ARG1_CPP, SIZE>: ARG1_CPP is not default constructible");
+  }
   FFI_FUNCTION_GUARD_END(nullptr)
 }
 

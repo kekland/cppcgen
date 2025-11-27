@@ -8,6 +8,8 @@ using ARG1 = int;
 using ARG1_CPP = int;
 using ARG1_C_PTR = int*;
 using ARG1_C_REF = int*;
+#define ARG1_CPP_RET = int
+#define ARG1_CPP_PARAMS = int, int
 #define ARG1_FFI_ERROR_RETURN 0
 
 ARG1_C_REF CAST1_TO_C_REF(ARG1_CPP value) { return reinterpret_cast<ARG1_C_REF>(&value); }
@@ -18,6 +20,8 @@ using ARG2 = int;
 using ARG2_CPP = int;
 using ARG2_C_PTR = int*;
 using ARG2_C_REF = int*;
+#define ARG2_CPP_RET = int
+#define ARG2_CPP_PARAMS = int, int
 #define ARG2_FFI_ERROR_RETURN 0
 
 ARG2_C_REF CAST2_TO_C_REF(ARG2_CPP value) { return reinterpret_cast<ARG2_C_REF>(&value); }

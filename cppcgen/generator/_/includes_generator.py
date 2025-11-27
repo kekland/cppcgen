@@ -41,6 +41,8 @@ def generate_includes(
   src_includes.append(f'<vector>')
 
   hdr_includes.append(f'"stdint.h"')
+  hdr_includes.append(f'"stdbool.h"')
+  hdr_includes.append(f'"stddef.h"')
 
   return GeneratedCode(
     hdr_includes=set(hdr_includes),

@@ -24,6 +24,6 @@ def generate_enum(enum: cpp.Enum) -> GeneratedCode:
   src.append(enum.from_c_fn.generate_impl())
 
   return GeneratedCode(
-    hdr=hdr,
+    hdr_enum_defs=hdr,
     src_enum_cv_defs=src,
   )

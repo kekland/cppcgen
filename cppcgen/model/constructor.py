@@ -42,8 +42,8 @@ def _is_copy_constructor(constructor: Constructor) -> bool:
   assert constructor.parent is not None
 
   is_ref_correct = type.is_lvalue_reference and type.pointee.is_const and not type.pointee.is_pointer_or_reference
-  is_return_correct = type.unqualified.cindex_decl_usr == constructor.parent.cindex_usr
-  return is_ref_correct and is_return_correct
+  # is_return_correct = type.unqualified.cindex_decl_usr == constructor.parent.cindex_usr
+  return is_ref_correct
 
 
 # Helper to determine if a constructor is a move constructor.
@@ -57,5 +57,5 @@ def _is_move_constructor(constructor: Constructor) -> bool:
   assert constructor.parent is not None
 
   is_ref_correct = type.is_rvalue_reference and not type.pointee.is_const and not type.pointee.is_pointer_or_reference
-  is_return_correct = type.unqualified.cindex_decl_usr == constructor.parent.cindex_usr
-  return is_ref_correct and is_return_correct
+  # is_return_correct = type.unqualified.cindex_decl_usr == constructor.parent.cindex_usr
+  return is_ref_correct

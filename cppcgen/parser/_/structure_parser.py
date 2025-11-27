@@ -4,7 +4,7 @@ from clang import cindex
 from typing import Optional
 from logging import getLogger
 
-from ... import context, parser
+from ... import context, parser, utils
 from ...model import cpp
 
 _logger = getLogger('structure_parser')
@@ -27,7 +27,19 @@ def parse_structure(cursor: cindex.Cursor, type_alias_cursor: Optional[cindex.Cu
 
   methods, synthetic_fields = parser.filter_methods_for_synthetic_fields(s, parser.parse_methods(cursor))
   s.methods = methods
-  s.synthetic_fields = synthetic_fields
+  s.synthetic_fields = list(synthetic_fields)
+
+  # merge/clean public fields and synthetic fields for them
+  for synth in synthetic_fields:
+    for field in s.fields:
+      if utils.cpp_name_to_c_name(field.name) == utils.cpp_name_to_c_name(synth.name):
+        field.getter = synth.getter
+        field.setter = synth.setter
+        s.synthetic_fields.remove(synth)
+        _logger.debug(f'Merged synthetic field {synth.name} into public field')
+        break
+
+
   s.constructors = parser.parse_constructors(cursor, s)
 
   context.add_structure(s)

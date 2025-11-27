@@ -21,6 +21,9 @@ def maybe_get_builtin_structure(type: cpp.Type) -> Optional[BuiltinStructure]:
   from .std_array import StdArrayStructure
   from .std_pair import StdPairStructure
   from .std_chrono_steady_clock_duration import StdChronoSteadyClockDurationStructure
+  from .std_unique_ptr import StdUniquePtrStructure
+  from .std_shared_ptr import StdSharedPtrStructure
+  from .std_function import StdFunctionStructure
 
   result: Optional[BuiltinStructure] = None
 
@@ -31,12 +34,17 @@ def maybe_get_builtin_structure(type: cpp.Type) -> Optional[BuiltinStructure]:
     if i > 0: typedef_name = type.namespaced_base_name
     i += 1
 
+    t_args_count = len(t.template_args)
+
     if name == 'std::string': result = StdStringStructure(typedef_name=typedef_name)
-    elif name == 'std::vector': result = StdVectorStructure(arg=t.template_args[0], typedef_name=typedef_name)
-    elif name == 'std::optional': result = StdOptionalStructure(arg=t.template_args[0], typedef_name=typedef_name)
-    elif name == 'std::array': result = StdArrayStructure(arg=t.template_args[0], size=int(t.template_args[1].base_name), typedef_name=typedef_name)
-    elif name == 'std::pair': result = StdPairStructure(arg1=t.template_args[0], arg2=t.template_args[1], typedef_name=typedef_name)
+    elif name == 'std::vector' and t_args_count == 1: result = StdVectorStructure(arg=t.template_args[0].base, typedef_name=typedef_name)
+    elif name == 'std::optional' and t_args_count == 1: result = StdOptionalStructure(arg=t.template_args[0].base, typedef_name=typedef_name)
+    elif name == 'std::array' and t_args_count == 2: result = StdArrayStructure(arg=t.template_args[0].base, size=int(t.template_args[1].base_name), typedef_name=typedef_name)
+    elif name == 'std::pair' and t_args_count == 2: result = StdPairStructure(arg1=t.template_args[0].base, arg2=t.template_args[1].base, typedef_name=typedef_name)
     elif name == 'std::chrono::steady_clock::duration': result = StdChronoSteadyClockDurationStructure(typedef_name=typedef_name)
+    elif name == 'std::unique_ptr' and t_args_count == 1: result = StdUniquePtrStructure(arg=t.template_args[0].base, typedef_name=typedef_name)
+    elif name == 'std::shared_ptr' and t_args_count == 1: result = StdSharedPtrStructure(arg=t.template_args[0].base, typedef_name=typedef_name)
+    elif name == 'std::function' and t_args_count == 1: result = StdFunctionStructure(arg=t.template_args[0].base, typedef_name=typedef_name)
 
     if result is not None: break
 
@@ -61,9 +69,15 @@ def modify_template_file_arg(lines: list[str], arg: cpp.Type, index: int) -> lis
   ref_pattern = fr'CAST{suf}_TO_C_REF\(([^)]+)\)'
   cpp_pattern = fr'CAST{suf}_TO_CPP\(([^)]+)\)'
   arg_ffi_error_return_pattern = fr'ARG{suf}_FFI_ERROR_RETURN'
+  arg_cpp_ret = fr'ARG{suf}_CPP_RET'
+  arg_cpp_params = fr'ARG{suf}_CPP_PARAMS'
 
   out = []
   for l in lines:
+    if arg.is_function:
+      l = re.sub(arg_cpp_ret, arg.function_return_type.full_name, l)
+      l = re.sub(arg_cpp_params, ', '.join([p.type.full_name for p in arg.function_parameters]), l)
+
     l = re.sub(arg_ffi_error_return_pattern, arg.ffi_error_default_return, l)
     l = re.sub(arg_cpp_pattern, arg.full_name, l)
     l = re.sub(arg_c_ptr_pattern, arg.as_c_ptr.full_name, l)
@@ -72,6 +86,7 @@ def modify_template_file_arg(lines: list[str], arg: cpp.Type, index: int) -> lis
     l = re.sub(ptr_pattern, lambda m: arg.cast_to_c_ptr(m.group(1)), l)
     l = re.sub(ref_pattern, lambda m: arg.cast_to_c_ref(m.group(1)), l)
     l = re.sub(cpp_pattern, lambda m: arg.cast_to_cpp(m.group(1)), l)
+
     out.append(l)
 
   return out
@@ -81,6 +96,9 @@ def modify_template_file_arg(lines: list[str], arg: cpp.Type, index: int) -> lis
 class BuiltinStructure(c.Structure):
   base: cpp.Structure = field(init=False)
   typedef_name: Optional[str] = field()
+
+  @property
+  def is_passthrough_type(self) -> bool: return False
 
   @property
   def base_name_impl(self) -> str: raise NotImplementedError()
@@ -104,7 +122,7 @@ class BuiltinStructure(c.Structure):
       self.base = self.cpp_structure_impl
 
   @property
-  def template_file_stem(self) -> str: return self.base_name_impl
+  def template_file_stem(self) -> str | None: return self.base_name_impl
 
   def modify_template_file(self, lines: list[str]) -> list[str]: return lines
 
@@ -114,12 +132,15 @@ class BuiltinStructure(c.Structure):
   def replace_base_name(self, lines: list[str]) -> list[str]:
     out = []
     for l in lines:
+      l = re.sub(fr'BASE_NAME', self.base_name, l)
       l = re.sub(fr'{self.base_name_impl}', self.base_name, l)
       out.append(l)
     return out
 
   @property
   def template_code(self) -> GeneratedCode:
+    if not self.template_file_stem: return GeneratedCode()
+
     file_name = pathlib.Path(__file__).parent / f'{self.template_file_stem}.hpp'
     with open(file_name, 'r') as f: content = f.read().splitlines()
     content = self.modify_template_file(content)

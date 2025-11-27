@@ -44,6 +44,6 @@ ffi_exception_t maybe_get_last_ffi_exception() {
   }
 }
 
-void ffi_exception_destroy(ffi_exception* ex) {
+void ffi_exception_destroy(ffi_exception_t ex) {
   delete ex;
 }
