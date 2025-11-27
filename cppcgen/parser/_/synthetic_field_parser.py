@@ -29,7 +29,7 @@ def _find_potential_synthetic_getter_for_setter(setter: cpp.Method, methods: lis
   for method in methods:
     if method is setter: continue
     getter_field_name = _potential_synthetic_field_getter_name(method)
-    if getter_field_name == field_name or method.name == field_name: return method
+    if getter_field_name == field_name or utils.cpp_name_to_c_name(method.name)== field_name: return method
 
   return None
 
@@ -47,34 +47,44 @@ def _find_potential_synthetic_setter_for_getter(getter: cpp.Method, methods: lis
 
 
 def filter_methods_for_synthetic_fields(parent: cpp.Structure, methods: list[cpp.Method]) -> tuple[list[cpp.Method], list[cpp.SyntheticField]]:
-  filtered_methods: list[cpp.Method] = []
   synthetic_fields: list[cpp.SyntheticField] = []
+  used_method_names: set[str] = set()
 
   for method in methods:
+    if method.name in used_method_names: continue
     setter_field_name = _potential_synthetic_field_setter_name(method)
     getter_field_name = _potential_synthetic_field_getter_name(method)
 
     if setter_field_name is not None:
-      _logger.debug(f'Parsed synthetic field: {setter_field_name} from setter method: {method.name}')
+      used_method_names.add(method.name)
+      getter = _find_potential_synthetic_getter_for_setter(method, methods)
+      if getter is not None: used_method_names.add(getter.name)
+
+      _logger.debug(f'Parsed synthetic field: {setter_field_name} from setter method: {method.name} (getter: {getter.name if getter else "None"})')
+
       synthetic_fields.append(
         cpp.SyntheticField(
           name=setter_field_name,
           setter=method,
-          getter=_find_potential_synthetic_getter_for_setter(method, methods),
+          getter=getter,
           parent_=parent,
         )
       )
     elif getter_field_name is not None:
-      _logger.debug(f'Parsed synthetic field: {getter_field_name} from getter method: {method.name}')
+      used_method_names.add(method.name)
+      setter = _find_potential_synthetic_setter_for_getter(method, methods)
+      if setter is not None: used_method_names.add(setter.name)
+
+      _logger.debug(f'Parsed synthetic field: {getter_field_name} from getter method: {method.name} (setter: {setter.name if setter else "None"})')
+
       synthetic_fields.append(
         cpp.SyntheticField(
           name=getter_field_name,
-          setter=_find_potential_synthetic_setter_for_getter(method, methods),
+          setter=setter,
           getter=method,
           parent_=parent,
         )
       )
-    else:
-      filtered_methods.append(method)
 
+  filtered_methods = [m for m in methods if m.name not in used_method_names]
   return filtered_methods, synthetic_fields
