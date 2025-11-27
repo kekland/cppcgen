@@ -27,6 +27,21 @@ def cpp_structure_create_methods(structure: c.Structure) -> list[cpp.Method]:
     result.append(method)
     index += 1
 
+  for static_factory_method in structure.base.static_factory_methods:
+    name = f'{structure.base_name}_create_{utils.cpp_name_to_c_name(static_factory_method.name)}'
+    call = static_factory_method.generate_call()
+    method = cpp.Method(
+      name=name,
+      return_type=structure.ref_type,
+      parameters=[param.as_c for param in static_factory_method.parameters],
+      impl=[
+        *generate_parameters_cast_block(static_factory_method.parameters),
+        f'return {structure.wrap_ref_type(f"{call}")};',
+      ],
+    )
+
+    result.append(method)
+
   return result
 
 

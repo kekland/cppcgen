@@ -23,6 +23,8 @@ struct FreeCameraOptions {
 
   void withZoom(int zoom_);
 
+  static FreeCameraOptions Default() noexcept;
+
   int zoom;
 };
 

@@ -54,6 +54,10 @@ class Structure:
   def regular_constructors(self) -> list[Constructor]: return [ctor for ctor in self.constructors if ctor.is_regular]
 
   @property
+  def static_factory_methods(self) -> list[Method]:
+    return [m for m in self.static_methods if m.return_type.base_name == self.name]
+
+  @property
   def type(self) -> Type:
     if self.type_ is not None: return self.type_
     if self.cindex_cursor is not None:
