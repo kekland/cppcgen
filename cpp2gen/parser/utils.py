@@ -66,8 +66,8 @@ def traverse_cursor(
       if not handled: next_traverse(child)
 
 
-# Get the namespace of a cursor
-def get_cursor_namespace(cursor: cindex.Cursor) -> str:
+# Get the namespaces of a cursor
+def get_cursor_namespaces(cursor: cindex.Cursor) -> list[str]:
   namespaces = []
   parent = cursor.semantic_parent
 
@@ -75,7 +75,7 @@ def get_cursor_namespace(cursor: cindex.Cursor) -> str:
     namespaces.append(parent.spelling)
     parent = parent.semantic_parent
 
-  return '::'.join(reversed(namespaces))
+  return list(reversed(namespaces))
 
 
 # Return a default value string for a cursor, if any

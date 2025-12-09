@@ -1,3 +1,5 @@
 **/__pycache__
 **/*.gen.cpp
 **/*.gen.h
+**/*.gen.dart
+.dart_tool

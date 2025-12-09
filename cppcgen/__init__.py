@@ -1,10 +1,11 @@
 import pathlib
+import subprocess
 
 from logging import getLogger
-from typing import Union, Any
+from typing import Union, Any, Optional
 from clang import cindex
 
-from . import parser, context, generator
+from . import parser, context, generator, dart
 from .converter.builtins import _used_builtins
 from .model import cpp
 
@@ -22,6 +23,9 @@ def parse_and_generate(
   output_src_file: pathlib.Path,
   hdr_prelude: list[str] = [],
   src_prelude: list[str] = [],
+  output_dart_file: Optional[pathlib.Path] = None,
+  output_dart_ffigen_file: Optional[pathlib.Path] = None,
+  dart_prelude: list[str] = [],
 ):
   entities_to_generate_ = entities_to_generate_
   should_populate_entities = entities_to_generate_ == ['*']
@@ -78,6 +82,21 @@ def parse_and_generate(
   with output_hdr_file.open('w', encoding='utf-8') as hdr_f: hdr_f.write(hdr_code)
   with output_src_file.open('w', encoding='utf-8') as src_f: src_f.write(src_code)
   _logger.info('Code generation completed.')
+
+  ffigen_script_path = pathlib.Path(__file__).parent / 'dart' / 'ffigen.dart'
+
+  if output_dart_file and output_dart_ffigen_file:
+    _logger.info(f'Running ffigen to generate Dart FFI bindings...')
+    subprocess.run([
+      ffigen_script_path,
+      output_hdr_file,
+      output_dart_ffigen_file,
+    ])
+
+    _logger.info(f'Writing Dart bindings to: {output_dart_file}')
+    dart_code = dart.generate(entities, dart_prelude, output_dart_ffigen_file.name)
+    with output_dart_file.open('w', encoding='utf-8') as dart_f: dart_f.write(dart_code)
+    _logger.info('Dart bindings generation completed.')
 
   context.clear()
   _used_builtins.clear()

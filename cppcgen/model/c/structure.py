@@ -33,14 +33,19 @@ class Structure:
   def destroy_method(self) -> Optional[cpp.Method]:
     from ...converter.structure_converter import cpp_structure_destroy_method
     return cpp_structure_destroy_method(self)
-  
+
   @property
   def unwrap_method(self) -> cpp.Method:
     from ...converter.structure_converter import cpp_structure_unwrap_method
     return cpp_structure_unwrap_method(self)
+  
+  @property
+  def copy_method(self) -> cpp.Method:
+    from ...converter.structure_converter import cpp_structure_copy_method
+    return cpp_structure_copy_method(self)
 
   @property
-  def field_methods(self) -> list[cpp.Method]:
+  def field_methods(self) -> dict[str, tuple[Optional[cpp.Method], Optional[cpp.Method]]]:
     from ...converter.structure_converter import cpp_structure_fields_to_c
     return cpp_structure_fields_to_c(self)
 
@@ -55,7 +60,11 @@ class Structure:
     res.extend(self.create_methods)
     res.append(self.destroy_method)
     res.append(self.unwrap_method)
-    res.extend(self.field_methods)
+    res.append(self.copy_method)
+    for getter, setter in self.field_methods.values():
+      if getter: res.append(getter)
+      if setter: res.append(setter)
+
     res.extend(self.methods)
     return res
 

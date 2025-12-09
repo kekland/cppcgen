@@ -44,4 +44,6 @@ for test_file in (root_dir / 'test').glob('*.hpp'):
     include_dirs=[root_dir / 'test' / 'include', root_dir / 'test'],
     output_src_file=root_dir / 'test' / f'{test_file.stem}.gen.cpp',
     output_hdr_file=root_dir / 'test' / f'{test_file.stem}.gen.h',
+    output_dart_file=root_dir / 'test' / f'{test_file.stem}.gen.dart',
+    output_dart_ffigen_file=root_dir / 'test' / f'{test_file.stem}.ffigen.gen.dart',
   )

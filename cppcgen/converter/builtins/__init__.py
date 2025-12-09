@@ -162,8 +162,8 @@ class BuiltinStructure(c.Structure):
     return []
 
   @property
-  def field_methods(self) -> list[cpp.Method]:
-    return []
+  def field_methods(self) -> dict[str, tuple[Optional[cpp.Method], Optional[cpp.Method]]]:
+    return {}
 
   @property
   def methods(self) -> list[cpp.Method]:

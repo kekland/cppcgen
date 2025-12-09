@@ -23,6 +23,8 @@ class Method:
   parameters: list[Parameter] = field(default_factory=list)
   cindex_cursor: Optional[cindex.Cursor] = field(default=None, repr=False)
   parent_: Optional[Structure] = field(default=None, repr=False)
+  base: Optional[Method] = field(default=None, repr=False)
+  parent_name_prefix: Optional[str] = field(default=None, repr=False)
 
   is_const: bool = False
   is_static: bool = False
@@ -49,10 +51,15 @@ class Method:
   def is_global(self) -> bool: return self.parent_ is None
 
   @property
+  def unprefixed_name(self) -> str:
+    if self.parent_name_prefix is not None and self.name.startswith(self.parent_name_prefix): return self.name[len(self.parent_name_prefix):]
+    return self.name
+
+  @property
   def full_name(self) -> str:
     if self.parent is not None: return f'{self.parent.full_name}::{self.name}'
     return utils.join_namespace(self.namespace, self.name)
-  
+
   @property
   def call_name(self) -> str:
     if self.parent is not None and self.is_static: return f'{self.parent.full_name}::{self.name}'
@@ -63,19 +70,19 @@ class Method:
   def as_c(self) -> Method:
     from ..converter import cpp_method_to_c
     return cpp_method_to_c(self)
-  
+
   @property
   def is_operator(self) -> bool:
-    return self.name.startswith('operator') # A bit naive, but works for now.
+    return self.name.startswith('operator')  # A bit naive, but works for now.
 
   def generate_decl(self) -> list[str]:
     from ..generator import generate_method_decl
     return generate_method_decl(self)
-  
+
   def generate_impl(self, impl: Optional[list[str]] = None) -> list[str]:
     from ..generator import generate_method_impl
     return generate_method_impl(self, impl)
-  
+
   def generate_call(self, param_names: Optional[list[str]] = None, param_suffix: Optional[str] = '_') -> str:
     from ..generator import generate_method_call
     return generate_method_call(self, param_names, param_suffix)

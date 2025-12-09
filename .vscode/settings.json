@@ -67,5 +67,5 @@
     "charconv": "cpp",
     "forward_list": "cpp"
   },
-  "C_Cpp.default.cppStandard": "c++20"
+  "C_Cpp.default.cppStandard": "c++20",
 }

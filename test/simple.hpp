@@ -1,3 +1,5 @@
+#include <print>
+
 namespace simple {
 
 enum class Color {
@@ -12,8 +14,17 @@ enum class Size {
   Large,
 };
 
+struct MyStruct {
+  int x;
+  float y;
+  bool z;
+};
+
 class MyClass {
  public:
+  MyClass();
+  ~MyClass();
+
   void voidMethod();
   int intMethod(int param);
   float floatMethod(float param1, float param2);
@@ -30,5 +41,7 @@ class MyClass {
   void setValue(int value);
 
   void hello(simple::MyClass* other);
+
+  void a() {}
 };
-}
+}  // namespace simple

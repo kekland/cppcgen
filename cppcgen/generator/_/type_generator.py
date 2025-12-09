@@ -42,6 +42,7 @@ def generate_type_cast_to_cpp(type: cpp.Type, var_name: str) -> str:
   elif type.is_decl_structure:
     s = type.as_structure
     s_c = s.as_c
-    return f'*{s_c.unwrap_type(var_name)}'
+    if type.is_pointer: return f'{s_c.unwrap_type(var_name)}'
+    else: return f'*{s_c.unwrap_type(var_name)}'
 
   return var_name
