@@ -13,4 +13,6 @@ from .field import Field
 class SyntheticField(Field):
   getter: Optional[Method] = field(default=None)
   setter: Optional[Method] = field(default=None)
-  type: Optional[Type] = field(init=False, default=None)
+  type: Optional[Type] = field(default=None)
+
+  def __repr_keys__(self): return [*super().__repr_keys__(), 'getter', 'setter']

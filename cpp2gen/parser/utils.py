@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from clang import cindex
-from typing import Union, Callable, Optional
+from typing import Callable, Optional
 
 
 # Recursively traverse the cursor tree.
@@ -11,6 +11,7 @@ from typing import Union, Callable, Optional
 # For on_struct and on_class, the typedef cursor is also provided as the second argument (if it exists).
 def traverse_cursor(
   cursor: cindex.Cursor,
+  on_namespace: Callable[[cindex.Cursor], Optional[bool]] = lambda c: False,
   on_struct: Callable[[cindex.Cursor, Optional[cindex.Cursor]], Optional[bool]] = lambda c, _: False,
   on_class: Callable[[cindex.Cursor, Optional[cindex.Cursor]], Optional[bool]] = lambda c, _: False,
   on_base_specifier: Callable[[cindex.Cursor], Optional[bool]] = lambda c: True,
@@ -22,7 +23,7 @@ def traverse_cursor(
   on_field: Callable[[cindex.Cursor], Optional[bool]] = lambda c: True,
 ):
   def next_traverse(child_cursor: cindex.Cursor):
-    traverse_cursor(child_cursor, on_struct, on_class, on_base_specifier, on_constructor, on_enum, on_enum_value, on_method, on_parameter, on_field)
+    traverse_cursor(child_cursor, on_namespace, on_struct, on_class, on_base_specifier, on_constructor, on_enum, on_enum_value, on_method, on_parameter, on_field)
 
   for child_ in cursor.get_children():
     child = child_
@@ -37,7 +38,9 @@ def traverse_cursor(
       continue
 
     # Namespaces
-    if child.kind == cindex.CursorKind.NAMESPACE: next_traverse(child)
+    if child.kind == cindex.CursorKind.NAMESPACE: 
+      handled = on_namespace(child)
+      if not handled: next_traverse(child)
     else:
       # Type aliases: if met, unwrap, and continue with the underlying type
       type_alias_cursor = None

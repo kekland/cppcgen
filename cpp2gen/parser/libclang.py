@@ -1,16 +1,15 @@
 import clang.cindex
 import subprocess
 import pathlib
-from logging import getLogger
 
-_logger = getLogger('libclang')
+from ..utils import get_logger
 
+logger = get_logger('libclang')
 
 
 # Configures libclang. Currently only set up for macOS with Homebrew LLVM.
 def configure_libclang():
   clang.cindex.Config.set_library_file('/opt/homebrew/opt/llvm/lib/libclang.dylib')
-
 
 
 # Returns the path to the macOS SDK.
@@ -55,5 +54,5 @@ def parse_translation_unit(file_path: pathlib.Path, include_dirs: list[pathlib.P
   )
 
   # print diagnostics
-  for diag in tu.diagnostics: _logger.warning(str(diag))
+  for diag in tu.diagnostics: logger.warning(str(diag))
   return tu

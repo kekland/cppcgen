@@ -23,7 +23,11 @@ struct MyStruct {
 class MyClass {
  public:
   MyClass();
+  MyClass(int value);
+  MyClass(const MyClass& other);
   ~MyClass();
+
+  static void staticMethod(float p1, simple::MyStruct* p2);
 
   void voidMethod();
   int intMethod(int param);

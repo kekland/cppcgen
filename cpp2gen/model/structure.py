@@ -13,9 +13,6 @@ from .type import Type
 @dataclass
 # A semantic representation of a structure (class/struct/etc).
 class Structure(Container):
-  @property
-  def as_type(self) -> Type: return Type(base_name=self.name, namespace=self.namespace)
-
   #
   # -- Constructors
   #
@@ -24,7 +21,10 @@ class Structure(Container):
   def constructors(self) -> list[Constructor]: return [c for c in self.children if type(c) is Constructor]
 
   @property
-  def factory_methods(self) -> list[Method]: return [m for m in self.static_methods if m.return_type == self.as_type]
+  def regular_constructors(self) -> list[Constructor]: return [c for c in self.constructors if not c.is_move and not c.is_copy]
+
+  @property
+  def factory_methods(self) -> list[Method]: return [m for m in self.static_methods if m.return_type == self.type]
 
   #
   # -- Methods
@@ -37,7 +37,13 @@ class Structure(Container):
   def static_methods(self) -> list[Method]: return [m for m in self.methods if m.is_static]
 
   @property
-  def instance_methods(self) -> list[Method]: return [m for m in self.methods if not m.is_static]
+  def static_nonfactory_methods(self) -> list[Method]: return [m for m in self.static_methods if m.return_type != self.type]
+
+  @property
+  def instance_methods(self) -> list[Method]: return [m for m in self.methods if not m.is_static and not m.is_operator]
+
+  @property
+  def operator_methods(self) -> list[Method]: return [m for m in self.methods if m.is_operator]
 
   #
   # -- Fields
@@ -51,3 +57,5 @@ class Structure(Container):
 
   @property
   def synthetic_fields(self) -> list[SyntheticField]: return [f for f in self.all_fields if isinstance(f, SyntheticField)]
+
+  def __repr_keys__(self): return [*super().__repr_keys__(), 'constructors', 'factory_methods', 'methods', 'all_fields']

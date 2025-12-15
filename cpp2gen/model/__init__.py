@@ -1,5 +1,6 @@
 from .constructor import Constructor
 from .container import Container
+from .element import Element
 from .enum import EnumValue, Enum
 from .field import Field
 from .method import Method
@@ -12,6 +13,7 @@ from .type import Type
 __all__ = [
   'Constructor',
   'Container',
+  'Element',
   'EnumValue',
   'Enum',
   'Field',

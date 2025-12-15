@@ -68,4 +68,9 @@
     "forward_list": "cpp"
   },
   "C_Cpp.default.cppStandard": "c++20",
+  "material-icon-theme.folders.associations": {
+    "builtins": "container",
+    "converter": "update",
+    "parser": "docs",
+  }
 }
